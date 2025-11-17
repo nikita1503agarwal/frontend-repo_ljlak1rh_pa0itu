@@ -1,25 +1,53 @@
 import { useState } from 'react'
+import Header from './components/Header'
+import Dashboard from './components/Dashboard'
+import ProductList from './components/ProductList'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [message, setMessage] = useState('')
+  const [seeding, setSeeding] = useState(false)
+
+  const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
+
+  const handleSeed = async () => {
+    try {
+      setSeeding(true)
+      const res = await fetch(`${baseUrl}/api/seed`, { method: 'POST' })
+      const data = await res.json()
+      setMessage(`Demo data ready: ${data.products} products, ${data.users} user(s)`) 
+      setTimeout(() => setMessage(''), 5000)
+      // Trigger a soft reload of stats by updating state; components fetch on mount
+    } catch (e) {
+      setMessage('Failed to seed demo data')
+    } finally {
+      setSeeding(false)
+    }
+  }
+
+  const handleTest = async () => {
+    try {
+      const res = await fetch(`${baseUrl}/test`)
+      const data = await res.json()
+      setMessage(data.database || 'Backend OK')
+      setTimeout(() => setMessage(''), 4000)
+    } catch {
+      setMessage('Cannot reach backend')
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">
-          Vibe Coding Platform
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Your AI-powered development environment
-        </p>
-        <div className="text-center">
-          <button
-            onClick={() => setCount(count + 1)}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
-          >
-            Count is {count}
-          </button>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <Header onSeed={handleSeed} seeding={seeding} onTest={handleTest} />
+
+        {message && (
+          <div className="rounded-xl p-3 border bg-white/70 text-sm text-gray-700">
+            {message}
+          </div>
+        )}
+
+        <Dashboard />
+        <ProductList />
       </div>
     </div>
   )
